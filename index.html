@@ -1,0 +1,2775 @@
+<!DOCTYPE html> 
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remake AI</title>
+    <link rel="icon" href="images/png2.png" type="image/png">
+    <style>
+        :root {
+            --text-size: 1rem;
+            --button-scale: 1;
+            --accent-light: #c1d8f4;
+            --accent-primary: #0483e4;
+            --accent-dark: #046bd4;
+            --background-color: #f4f8fd;
+            --text-color: #23272c;
+            --card-bg: #ffffff;
+            --border-color: #d8e6f8;
+            --shadow: 0 5px 15px rgba(4, 107, 212, 0.08);
+            --settings-text-size: 1rem;
+            --button-text-color: white;
+            --button-bg: linear-gradient(to right, #003CC5 0%, #0B63F6 51%, #003CC5 100%);
+            --white-to-gray: #ffffff;
+        }
+
+        .dark-theme {
+            --background-color: #0a0e14;
+            --text-color: #e1e7ef;
+            --card-bg: #1a1f29;
+            --border-color: #2a3242;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            --button-text-color: #ffffff;
+            --button-bg: linear-gradient(to right, #003CC5 0%, #0B63F6 51%, #003CC5 100%);
+            --white-to-gray: #a0a0a0;
+        }
+
+        .colorblind-theme {
+            --accent-primary: #0072B2;
+            --accent-dark: #E69F00;
+            --accent-light: #56B4E9;
+            --button-bg: linear-gradient(to right, #0072B2 0%, #56B4E9 51%, #0072B2 100%);
+            --button-text-color: #ffffff;
+        }
+
+        .colorblind-theme.dark-theme {
+            --accent-primary: #56B4E9;
+            --accent-dark: #F0E442;
+            --accent-light: #0072B2;
+            --button-bg: linear-gradient(to right, #56B4E9 0%, #F0E442 51%, #56B4E9 100%);
+            --button-text-color: #0a0e14;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            font-size: var(--text-size);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        textarea,
+        textarea * {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+        
+        .floating-circle {
+            position: fixed;
+            top: -30px;
+            border-radius: 50%;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 9998;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .floating-circle.bubbles {
+            background: radial-gradient(circle at 30% 30%, rgba(193,216,244,0.8), rgba(4,131,228,0.4));
+            box-shadow: 0 0 10px rgba(4,131,228,0.3);
+        }
+
+        .floating-circle.hearts {
+            background: transparent;
+            font-size: 20px;
+            text-align: center;
+            line-height: 1;
+            color: #ff6b6b;
+        }
+
+        .floating-circle.snow {
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(240,240,240,0.6));
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+
+        .floating-circle.stars {
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,0,0.8), rgba(255,215,0,0.4));
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        .language-selector {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .language-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .language-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            bottom: 60px;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            min-width: 150px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .language-dropdown.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .language-option {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .language-option:last-child {
+            border-bottom: none;
+        }
+
+        .language-option:hover {
+            background-color: rgba(0, 114, 178, 0.05);
+        }
+
+        .language-option.selected {
+            background-color: rgba(0, 114, 178, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .language-flag {
+            font-size: 1.2rem;
+        }
+
+        .language-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .language-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .language-indicator.active {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dark) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(4, 107, 212, 0.15);
+            position: relative;
+            z-index: 3;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .logo {
+            font-size: calc(var(--text-size) * 1.75);
+            font-weight: 700;
+            color: white;
+        }
+        
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: none;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--accent-primary);
+            transition: all 0.3s ease;
+            opacity: 0.9;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .settings-btn:hover {
+            opacity: 1;
+            background: var(--accent-light);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .settings-btn:hover .settings-icon {
+            animation: rotate 2s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .settings-icon {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+            transition: transform 0.3s ease;
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            width: 350px;
+            padding: 0;
+            overflow: hidden;
+            display: none;
+            border: 1px solid var(--border-color);
+            font-size: var(--settings-text-size);
+        }
+        
+        .settings-panel.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .settings-header {
+            padding: 20px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dark) 100%);
+            color: white;
+        }
+        
+        .settings-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+        
+        .settings-cell {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        
+        .settings-cell:hover {
+            background-color: rgba(0, 114, 178, 0.05);
+        }
+        
+        .colorblind-theme .settings-cell:hover {
+            background-color: rgba(230, 159, 0, 0.05);
+        }
+        
+        .dark-theme .settings-cell:hover {
+            background-color: #252c3a;
+        }
+        
+        .settings-cell:last-child {
+            border-bottom: none;
+        }
+        
+        .cell-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .cell-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .cell-arrow {
+            color: var(--accent-primary);
+            transition: transform 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .cell-arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .cell-content {
+            display: none;
+        }
+        
+        .cell-content.active {
+            display: block;
+        }
+        
+        .control-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .control-btn {
+            padding: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: var(--text-color);
+        }
+        
+        .control-btn:hover {
+            background: var(--accent-light);
+            border-color: var(--accent-primary);
+            color: var(--text-color);
+        }
+        
+        .colorblind-theme .control-btn:hover {
+            background: rgba(86, 180, 233, 0.1);
+            border-color: var(--accent-primary);
+        }
+        
+        .size-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            margin-top: 5px;
+            grid-column: 1 / -1;
+        }
+        
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(0, 114, 178, 0.05);
+            border-radius: 8px;
+        }
+        
+        .colorblind-theme .toggle-group {
+            background: rgba(230, 159, 0, 0.05);
+        }
+        
+        .dark-theme .toggle-group {
+            background: #252c3a;
+        }
+        
+        .toggle-label {
+            font-weight: 500;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent-primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .reset-btn:hover {
+            background: var(--accent-primary);
+            color: var(--button-text-color);
+        }
+        
+        .background-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        
+        .background-option {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .background-option:hover,
+        .background-option.selected {
+            border-color: var(--accent-primary);
+        }
+        
+        .bg-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .bg-name {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .effects-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-height: 400px; /* Ограничиваем высоту контейнера */
+            overflow-y: auto;  /* Добавляем вертикальную прокрутку */
+            padding: 5px;      /* Добавляем отступы для лучшего визуального восприятия */
+        }
+        
+        /* Добавляем стили для скроллбара в разделе эффектов */
+        .effects-options::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .effects-options::-webkit-scrollbar-track {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .effects-options::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+        
+        .effects-options::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-dark);
+        }
+        
+        /* Для Firefox */
+        .effects-options {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--border-color);
+        }
+        
+        .effect-option {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .effect-option:hover,
+        .effect-option.selected {
+            border-color: var(--accent-primary);
+            background-color: rgba(0, 114, 178, 0.05);
+        }
+        
+        .effect-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            overflow: hidden;
+        }
+        
+        .effect-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .effect-desc {
+            font-size: 0.75rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .input-section, .preview-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .input-section {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+            max-height: 700px;
+            resize: none;
+            overflow: hidden;
+        }
+        
+        .section-title {
+            font-size: calc(var(--text-size) * 1.5);
+            margin-bottom: 20px;
+            color: var(--text-color);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: var(--text-size);
+            resize: vertical;
+            min-height: 120px;
+            max-height: 300px;
+            transition: border 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(0, 114, 178, 0.1);
+        }
+        
+        .styles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .style-option {
+            position: relative;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--card-bg);
+        }
+        
+        .style-option:hover {
+            border-color: var(--accent-primary);
+            background-color: rgba(0, 114, 178, 0.05);
+        }
+        
+        .colorblind-theme .style-option:hover {
+            background-color: rgba(230, 159, 0, 0.05);
+        }
+        
+        .style-option.selected {
+            border-color: var(--accent-primary);
+            background-color: rgba(0, 114, 178, 0.1);
+        }
+        
+        .colorblind-theme .style-option.selected {
+            background-color: rgba(230, 159, 0, 0.1);
+        }
+        
+        .style-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+        
+        .style-desc {
+            font-size: calc(var(--text-size) * 0.875);
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
+        .generate-btn {
+            display: block;
+            width: 100%;
+            color: var(--button-text-color);
+            border: none;
+            padding: calc(15px * var(--button-scale));
+            border-radius: 10px;
+            font-size: calc(var(--text-size) * 1.125);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.5s;
+            margin-top: 10px;
+            transform: scale(var(--button-scale));
+            text-align: center;
+            background-size: 200% auto;
+            box-shadow: 0 4px 15px rgba(0, 60, 197, 0.3);
+            background-image: var(--button-bg);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px) scale(var(--button-scale));
+            background-position: right center;
+            box-shadow: 0 6px 20px rgba(0, 60, 197, 0.4);
+        }
+        
+        .preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+            max-height: 500px;
+            overflow: hidden;
+        }
+        
+        .preview-placeholder {
+            flex: 1;
+            background-color: rgba(0, 114, 178, 0.05);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: var(--text-size);
+            text-align: center;
+            padding: 20px;
+            min-height: 300px;
+            resize: none;
+            overflow: auto;
+        }
+        
+        .colorblind-theme .preview-placeholder {
+            background-color: rgba(230, 159, 0, 0.05);
+        }
+        
+        .dark-theme .preview-placeholder {
+            background-color: #252c3a;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            display: none;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .service-info {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin: 40px 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        .service-info h2 {
+            font-size: calc(var(--text-size) * 1.75);
+            margin-bottom: 20px;
+            color: var(--text-color);
+            text-align: center;
+        }
+        
+        .service-info p {
+            font-size: calc(var(--text-size) * 1.125);
+            color: var(--text-color);
+            margin-bottom: 15px;
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        footer {
+            background: var(--accent-dark);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            position: relative;
+            z-index: 3;
+        }
+        
+        .dark-theme footer {
+            background: var(--accent-dark);
+            color: white;
+        }
+        
+        .colorblind-theme footer {
+            background: var(--accent-dark);
+            color: white;
+        }
+        
+        .download-btn {
+            display: block;
+            width: 100%;
+            color: var(--button-text-color);
+            border: none;
+            padding: calc(12px * var(--button-scale));
+            border-radius: 8px;
+            font-size: calc(var(--text-size) * 1);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 15px;
+            transform: scale(var(--button-scale));
+            text-align: center;
+            background-size: 200% auto;
+            box-shadow: 0 2px 10px rgba(0, 60, 197, 0.2);
+            background-image: var(--button-bg);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-1px) scale(var(--button-scale));
+            background-position: right center;
+            box-shadow: 0 4px 15px rgba(0, 60, 197, 0.3);
+        }
+        
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: scale(var(--button-scale));
+        }
+        
+        .download-btn:disabled:hover {
+            transform: scale(var(--button-scale));
+            background-position: left center;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .styles-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings-panel {
+                width: 300px;
+                right: 10px;
+            }
+            
+            .logo {
+                font-size: calc(var(--text-size) * 1.5);
+            }
+            
+            .logo-img {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .preview-section {
+                min-height: 400px;
+                max-height: 500px;
+            }
+            
+            .settings-btn {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .settings-icon {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .background-options {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .language-dropdown {
+                right: -50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/png1.png" alt="Логотип сайта" class="logo-img">
+                    <div class="logo" data-i18n="siteTitle">Remake AI</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <button class="settings-btn" id="settingsBtn">
+        <svg class="settings-icon" viewBox="0 0 24 24">
+            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+        </svg>
+    </button>
+
+    <div class="language-selector">
+        <div class="language-btn" id="languageBtn">
+            <span id="currentLanguageFlag">🇷🇺</span>
+            <div class="language-indicator" id="languageIndicator"></div>
+        </div>
+        <div class="language-dropdown" id="languageDropdown">
+            <div class="language-option selected" data-lang="ru">
+                <span class="language-flag">🇷🇺</span>
+                <span class="language-name">Русский</span>
+            </div>
+            <div class="language-option" data-lang="en">
+                <span class="language-flag">🇺🇸</span>
+                <span class="language-name">English</span>
+            </div>
+            <div class="language-option" data-lang="zh">
+                <span class="language-flag">🇨🇳</span>
+                <span class="language-name">中文</span>
+            </div>
+            <div class="language-option" data-lang="ko">
+                <span class="language-flag">🇰🇷</span>
+                <span class="language-name">한국어</span>
+            </div>
+            <div class="language-option" data-lang="ja">
+                <span class="language-flag">🇯🇵</span>
+                <span class="language-name">日本語</span>
+            </div>
+            <div class="language-option" data-lang="ar">
+                <span class="language-flag">🇸🇦</span>
+                <span class="language-name">العربية</span>
+            </div>
+            <div class="language-option" data-lang="es">
+                <span class="language-flag">🇪🇸</span>
+                <span class="language-name">Español</span>
+            </div>
+            <div class="language-option" data-lang="fr">
+                <span class="language-flag">🇫🇷</span>
+                <span class="language-name">Français</span>
+            </div>
+            <div class="language-option" data-lang="de">
+                <span class="language-flag">🇩🇪</span>
+                <span class="language-name">Deutsch</span>
+            </div>
+            <div class="language-option" data-lang="pt">
+                <span class="language-flag">🇵🇹</span>
+                <span class="language-name">Português</span>
+            </div>
+            <div class="language-option" data-lang="hi">
+                <span class="language-flag">🇮🇳</span>
+                <span class="language-name">हिन्दी</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h3 class="settings-title" data-i18n="settings.title">Настройки доступности</h3>
+        </div>
+        
+        <div class="settings-grid">
+            <div class="settings-cell">
+                <div class="cell-header" data-cell="text">
+                    <div class="cell-title" data-i18n="settings.text">Текст</div>
+                    <div class="cell-arrow">▼</div>
+                </div>
+                <div class="cell-content" id="text-cell">
+                    <div class="control-group">
+                        <button class="control-btn" id="decreaseText">
+                            <span>−</span> <span data-i18n="settings.decrease">Уменьшить</span>
+                        </button>
+                        <button class="control-btn" id="increaseText">
+                            <span>+</span> <span data-i18n="settings.increase">Увеличить</span>
+                        </button>
+                        <div class="size-indicator" id="textSizeIndicator">100%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-cell">
+                <div class="cell-header" data-cell="buttons">
+                    <div class="cell-title" data-i18n="settings.buttons">Кнопки</div>
+                    <div class="cell-arrow">▼</div>
+                </div>
+                <div class="cell-content" id="buttons-cell">
+                    <div class="control-group">
+                        <button class="control-btn" id="decreaseButtons">
+                            <span>−</span> <span data-i18n="settings.decrease">Уменьшить</span>
+                        </button>
+                        <button class="control-btn" id="increaseButtons">
+                            <span>+</span> <span data-i18n="settings.increase">Увеличить</span>
+                        </button>
+                        <div class="size-indicator" id="buttonSizeIndicator">100%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-cell">
+                <div class="cell-header" data-cell="background">
+                    <div class="cell-title" data-i18n="settings.background">Фон страницы</div>
+                    <div class="cell-arrow">▼</div>
+                </div>
+                <div class="cell-content" id="background-cell">
+                    <div class="background-options">
+    <div class="background-option selected" data-bg="default">
+        <div class="bg-preview" style="background: var(--background-color);"></div>
+        <div class="bg-name" data-i18n="settings.default">По умолчанию</div>
+    </div>
+    <div class="background-option" data-bg="pattern1">
+        <div class="bg-preview pattern-preview" data-pattern="1"></div>
+        <div class="bg-name">Узор 1</div>
+    </div>
+    <div class="background-option" data-bg="pattern2">
+        <div class="bg-preview pattern-preview" data-pattern="2"></div>
+        <div class="bg-name">Узор 2</div>
+    </div>
+    <div class="background-option" data-bg="pattern3">
+        <div class="bg-preview pattern-preview" data-pattern="3"></div>
+        <div class="bg-name">Узор 3</div>
+    </div>
+    <div class="background-option" data-bg="pattern4">
+        <div class="bg-preview pattern-preview" data-pattern="4"></div>
+        <div class="bg-name">Узор 4</div>
+    </div>
+    <div class="background-option" data-bg="pattern5">
+        <div class="bg-preview pattern-preview" data-pattern="5"></div>
+        <div class="bg-name">Узор 5</div>
+    </div>
+    <div class="background-option" data-bg="pattern6">
+        <div class="bg-preview pattern-preview" data-pattern="6"></div>
+        <div class="bg-name">Узор 6</div>
+    </div>
+    <div class="background-option" data-bg="pattern7">
+        <div class="bg-preview pattern-preview" data-pattern="7"></div>
+        <div class="bg-name">Узор 7</div>
+    </div>
+    <div class="background-option" data-bg="pattern8">
+        <div class="bg-preview pattern-preview" data-pattern="8"></div>
+        <div class="bg-name">Узор 8</div>
+    </div>
+    <div class="background-option" data-bg="pattern11">
+        <div class="bg-preview pattern-preview" data-pattern="11"></div>
+        <div class="bg-name">Узор 9</div>
+    </div>
+    <div class="background-option" data-bg="pattern12">
+        <div class="bg-preview pattern-preview" data-pattern="12"></div>
+        <div class="bg-name">Узор 10</div>
+    </div>
+    <div class="background-option" data-bg="pattern13">
+        <div class="bg-preview pattern-preview" data-pattern="13"></div>
+        <div class="bg-name">Узор 11</div>
+    </div>
+    <div class="background-option" data-bg="pattern14">
+        <div class="bg-preview pattern-preview" data-pattern="14"></div>
+        <div class="bg-name">Узор 12</div>
+    </div>
+    <div class="background-option" data-bg="pattern15">
+        <div class="bg-preview pattern-preview" data-pattern="15"></div>
+        <div class="bg-name">Узор 13</div>
+    </div>
+    <div class="background-option" data-bg="pattern16">
+        <div class="bg-preview pattern-preview" data-pattern="16"></div>
+        <div class="bg-name">Узор 14</div>
+    </div>
+    <div class="background-option" data-bg="pattern17">
+        <div class="bg-preview pattern-preview" data-pattern="17"></div>
+        <div class="bg-name">Узор 15</div>
+    </div>
+    <div class="background-option" data-bg="pattern18">
+        <div class="bg-preview pattern-preview" data-pattern="18"></div>
+        <div class="bg-name">Узор 16</div>
+    </div>
+    <div class="background-option" data-bg="pattern19">
+        <div class="bg-preview pattern-preview" data-pattern="19"></div>
+        <div class="bg-name">Узор 17</div>
+    </div>
+    <div class="background-option" data-bg="pattern20">
+        <div class="bg-preview pattern-preview" data-pattern="20"></div>
+        <div class="bg-name">Узор 18</div>
+    </div>
+    <div class="background-option" data-bg="pattern21">
+        <div class="bg-preview pattern-preview" data-pattern="21"></div>
+        <div class="bg-name">Узор 19</div>
+    </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-cell">
+                <div class="cell-header" data-cell="effects">
+                    <div class="cell-title" data-i18n="settings.effects">Эффекты</div>
+                    <div class="cell-arrow">▼</div>
+                </div>
+                <div class="cell-content" id="effects-cell">
+                    <div class="effects-options">
+                        <div class="effect-option selected" data-effect="none">
+                            <div class="effect-preview" data-i18n="effects.none">Без эффектов</div>
+                        </div>
+                        <div class="effect-option" data-effect="bubbles">
+                            <div class="effect-preview" data-i18n="effects.bubbles">🔵 Пузырьки</div>
+                        </div>
+                        <div class="effect-option" data-effect="hearts">
+                            <div class="effect-preview">❤️ <span data-i18n="effects.hearts">Сердечки</span></div>
+                        </div>
+                        <div class="effect-option" data-effect="snow">
+                            <div class="effect-preview">❄️ <span data-i18n="effects.snow">Снежинки</span></div>
+                        </div>
+                        <div class="effect-option" data-effect="stars">
+                            <div class="effect-preview">⭐ <span data-i18n="effects.stars">Звездочки</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-cell">
+                <div class="cell-header" data-cell="display">
+                    <div class="cell-title" data-i18n="settings.display">Отображение</div>
+                    <div class="cell-arrow">▼</div>
+                </div>
+                <div class="cell-content" id="display-cell">
+                    <div class="toggle-group">
+                        <span class="toggle-label" data-i18n="settings.colorblind">Режим для дальтоников</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="colorblindToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label" data-i18n="settings.darkTheme">Тёмная тема</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="themeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-cell">
+                <button class="reset-btn" id="resetSettings" data-i18n="settings.reset">Сбросить настройки</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title" data-i18n="main.createImage">Создайте ваше изображение</h2>
+                
+                <div class="input-group">
+                    <label for="prompt" data-i18n="main.describeImage">Опишите ваше изображение:</label>
+                    <textarea id="prompt" placeholder data-i18n="main.promptPlaceholder">Например: Красивый закат над горным озером с отражением в воде</textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label data-i18n="main.chooseStyle">Выберите стиль:</label>
+                    <div class="styles-grid">
+                        <div class="style-option" data-style="realism">
+                            <div class="style-name" data-i18n="styles.realism">Реализм</div>
+                            <div class="style-desc" data-i18n="styles.realismDesc">Фотографически точные изображения</div>
+                        </div>
+                        <div class="style-option" data-style="concept">
+                            <div class="style-name" data-i18n="styles.concept">Концепт-арт</div>
+                            <div class="style-desc" data-i18n="styles.conceptDesc">Креативные концепции для игр и фильмов</div>
+                        </div>
+                        <div class="style-option" data-style="minimalism">
+                            <div class="style-name" data-i18n="styles.minimalism">Минимализм</div>
+                            <div class="style-desc" data-i18n="styles.minimalismDesc">Простота и элегантность</div>
+                        </div>
+                        <div class="style-option" data-style="anime">
+                            <div class="style-name" data-i18n="styles.anime">Аниме</div>
+                            <div class="style-desc" data-i18n="styles.animeDesc">В стиле японской анимации</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="generate-btn" id="generateBtn" data-i18n="main.generate">Сгенерировать изображение</button>
+            </div>
+            
+            <div class="preview-section">
+                <h2 class="section-title" data-i18n="main.preview">Предпросмотр</h2>
+                
+                <div class="preview-container">
+                    <div class="preview-placeholder" id="previewPlaceholder" data-i18n="main.previewPlaceholder">
+                        Здесь появится ваше сгенерированное изображение
+                    </div>
+                    
+                    <img class="preview-image" id="previewImage" src="" alt data-i18n="main.generatedImage">
+                    
+                    <div class="loading" id="loadingIndicator">
+                        <div class="spinner"></div>
+                        <p data-i18n="main.generating">Генерируем ваше изображение...</p>
+                    </div>
+                </div>
+                
+                <button class="download-btn" id="downloadBtn" disabled data-i18n="main.download">Скачать изображение</button>
+            </div>
+        </div>
+        
+        <div class="service-info">
+            <h2 data-i18n="info.title">Создавайте изображения за 30 секунд</h2>
+            <p data-i18n="info.description1">Наш сервис использует передовые технологии искусственного интеллекта для преобразования ваших текстовых описаний в уникальные изображения. Просто опишите, что вы хотите увидеть, выберите стиль и нажмите "Сгенерировать".</p>
+            <p data-i18n="info.description2">Всего за 30 секунд вы получите готовое изображение, которое можно использовать для личных или коммерческих проектов. Не требуется никаких навыков рисования или дизайна - просто ваше воображение и наш AI.</p>
+        </div>
+    </div>
+
+<footer style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--accent-dark); color: white; padding: 10px 0; text-align: center; z-index: 999;">
+    <div class="container">
+        <p>&copy; Remake AI. <span data-i18n="footer.rights">Все права защищены.</span></p>
+    </div>
+</footer>
+
+    <script>
+        const translations = {
+            ru: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Настройки доступности",
+                    text: "Текст",
+                    buttons: "Кнопки",
+                    background: "Фон страницы",
+                    effects: "Эффекты",
+                    display: "Отображение",
+                    decrease: "Уменьшить",
+                    increase: "Увеличить",
+                    default: "По умолчанию",
+                    pattern1: "Узор 1",
+                    pattern2: "Узор 2",
+                    colorblind: "Режим для дальтоников",
+                    darkTheme: "Тёмная тема",
+                    reset: "Сбросить настройки"
+                },
+                effects: {
+                    none: "Без эффектов",
+                    off: "Выключено",
+                    offDesc: "Отключить все анимации",
+                    bubbles: "Пузырьки",
+                    bubblesDesc: "Плавающие разноцветные круги",
+                    hearts: "Сердечки",
+                    heartsDesc: "Падающие сердечки",
+                    snow: "Снежинки",
+                    snowDesc: "Зимняя снежная метель",
+                    stars: "Звездочки",
+                    starsDesc: "Мерцающие звезды"
+                },
+                main: {
+                    createImage: "Создайте ваше изображение",
+                    describeImage: "Опишите ваше изображение:",
+                    promptPlaceholder: "Например: Красивый закат над горным озером с отражением в воде",
+                    chooseStyle: "Выберите стиль:",
+                    generate: "Сгенерировать изображение",
+                    preview: "Предпросмотр",
+                    previewPlaceholder: "Здесь появится ваше сгенерированное изображение",
+                    generatedImage: "Сгенерированное изображение",
+                    generating: "Генерируем ваше изображение...",
+                    download: "Скачать изображение"
+                },
+                styles: {
+                    realism: "Реализм",
+                    realismDesc: "Фотографически точные изображения",
+                    concept: "Концепт-арт",
+                    conceptDesc: "Креативные концепции для игр и фильмов",
+                    minimalism: "Минимализм",
+                    minimalismDesc: "Простота и элегантность",
+                    anime: "Аниме",
+                    animeDesc: "В стиле японской анимации"
+                },
+                info: {
+                    title: "Создавайте изображения за 30 секунд",
+                    description1: "Наш сервис использует передовые технологии искусственного интеллекта для преобразования ваших текстовых описаний в уникальные изображения. Просто опишите, что вы хотите увидеть, выберите стиль и нажмите 'Сгенерировать'.",
+                    description2: "Всего за 30 секунд вы получите готовое изображение, которое можно использовать для личных или коммерческих проектов. Не требуется никаких навыков рисования или дизайна - просто ваше воображение и наш AI."
+                },
+                footer: {
+                    rights: "Все права защищены."
+                }
+            },
+            en: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Accessibility Settings",
+                    text: "Text",
+                    buttons: "Buttons",
+                    background: "Page Background",
+                    effects: "Effects",
+                    display: "Display",
+                    decrease: "Decrease",
+                    increase: "Increase",
+                    default: "Default",
+                    pattern1: "Pattern 1",
+                    pattern2: "Pattern 2",
+                    colorblind: "Colorblind Mode",
+                    darkTheme: "Dark Theme",
+                    reset: "Reset Settings"
+                },
+                effects: {
+                    none: "No Effects",
+                    off: "Disabled",
+                    offDesc: "Disable all animations",
+                    bubbles: "Bubbles",
+                    bubblesDesc: "Floating colored circles",
+                    hearts: "Hearts",
+                    heartsDesc: "Falling hearts",
+                    snow: "Snowflakes",
+                    snowDesc: "Winter snow storm",
+                    stars: "Stars",
+                    starsDesc: "Twinkling stars"
+                },
+                main: {
+                    createImage: "Create Your Image",
+                    describeImage: "Describe your image:",
+                    promptPlaceholder: "For example: Beautiful sunset over a mountain lake with reflection in water",
+                    chooseStyle: "Choose style:",
+                    generate: "Generate Image",
+                    preview: "Preview",
+                    previewPlaceholder: "Your generated image will appear here",
+                    generatedImage: "Generated image",
+                    generating: "Generating your image...",
+                    download: "Download Image"
+                },
+                styles: {
+                    realism: "Realism",
+                    realismDesc: "Photographically accurate images",
+                    concept: "Concept Art",
+                    conceptDesc: "Creative concepts for games and movies",
+                    minimalism: "Minimalism",
+                    minimalismDesc: "Simplicity and elegance",
+                    anime: "Anime",
+                    animeDesc: "In Japanese animation style"
+                },
+                info: {
+                    title: "Create Images in 30 Seconds",
+                    description1: "Our service uses advanced artificial intelligence technologies to transform your text descriptions into unique images. Just describe what you want to see, choose a style and click 'Generate'.",
+                    description2: "In just 30 seconds you'll get a ready-made image that can be used for personal or commercial projects. No drawing or design skills required - just your imagination and our AI."
+                },
+                footer: {
+                    rights: "All rights reserved."
+                }
+            },
+            zh: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "无障碍设置",
+                    text: "文本",
+                    buttons: "按钮",
+                    background: "页面背景",
+                    effects: "效果",
+                    display: "显示",
+                    decrease: "减小",
+                    increase: "增大",
+                    default: "默认",
+                    pattern1: "图案 1",
+                    pattern2: "图案 2",
+                    colorblind: "色盲模式",
+                    darkTheme: "深色主题",
+                    reset: "重置设置"
+                },
+                effects: {
+                    none: "无效果",
+                    off: "已禁用",
+                    offDesc: "禁用所有动画",
+                    bubbles: "气泡",
+                    bubblesDesc: "漂浮的彩色圆圈",
+                    hearts: "爱心",
+                    heartsDesc: "飘落的心形",
+                    snow: "雪花",
+                    snowDesc: "冬季雪景",
+                    stars: "星星",
+                    starsDesc: "闪烁的星星"
+                },
+                main: {
+                    createImage: "创建您的图像",
+                    describeImage: "描述您的图像：",
+                    promptPlaceholder: "例如：山湖上的美丽日落，水中倒影",
+                    chooseStyle: "选择风格：",
+                    generate: "生成图像",
+                    preview: "预览",
+                    previewPlaceholder: "您生成的图像将出现在这里",
+                    generatedImage: "生成的图像",
+                    generating: "正在生成您的图像...",
+                    download: "下载图像"
+                },
+                styles: {
+                    realism: "现实主义",
+                    realismDesc: "照片般精确的图像",
+                    concept: "概念艺术",
+                    conceptDesc: "游戏和电影的创意概念",
+                    minimalism: "极简主义",
+                    minimalismDesc: "简约与优雅",
+                    anime: "动漫",
+                    animeDesc: "日本动画风格"
+                },
+                info: {
+                    title: "30秒创建图像",
+                    description1: "我们的服务使用先进的人工智能技术将您的文本描述转换为独特的图像。只需描述您想看的内容，选择样式并点击“生成”。",
+                    description2: "只需30秒，您就能获得可用于个人或商业项目的现成图像。无需任何绘画或设计技能 - 只需您的想象力和我们的AI。"
+                },
+                footer: {
+                    rights: "保留所有权利。"
+                }
+            },
+            ko: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "접근성 설정",
+                    text: "텍스트",
+                    buttons: "버튼",
+                    background: "페이지 배경",
+                    effects: "효과",
+                    display: "디스플레이",
+                    decrease: "감소",
+                    increase: "증가",
+                    default: "기본값",
+                    pattern1: "패턴 1",
+                    pattern2: "패턴 2",
+                    colorblind: "색맹 모드",
+                    darkTheme: "다크 테마",
+                    reset: "설정 초기화"
+                },
+                effects: {
+                    none: "효과 없음",
+                    off: "비활성화",
+                    offDesc: "모든 애니메이션 비활성화",
+                    bubbles: "버블",
+                    bubblesDesc: "떠다니는 컬러 원",
+                    hearts: "하트",
+                    heartsDesc: "떨어지는 하트",
+                    snow: "눈송이",
+                    snowDesc: "겨울 눈보라",
+                    stars: "별",
+                    starsDesc: "반짝이는 별"
+                },
+                main: {
+                    createImage: "이미지 생성",
+                    describeImage: "이미지 설명:",
+                    promptPlaceholder: "예: 산호수 위 아름다운 일몰과 물에 비친 반사",
+                    chooseStyle: "스타일 선택:",
+                    generate: "이미지 생성",
+                    preview: "미리보기",
+                    previewPlaceholder: "생성된 이미지가 여기에 나타납니다",
+                    generatedImage: "생성된 이미지",
+                    generating: "이미지를 생성 중입니다...",
+                    download: "이미지 다운로드"
+                },
+                styles: {
+                    realism: "리얼리즘",
+                    realismDesc: "사진처럼 정확한 이미지",
+                    concept: "컨셉 아트",
+                    conceptDesc: "게임 및 영화를 위한 창의적인 컨셉",
+                    minimalism: "미니멀리즘",
+                    minimalismDesc: "단순함과 우아함",
+                    anime: "애니메",
+                    animeDesc: "일본 애니메이션 스타일"
+                },
+                info: {
+                    title: "30초 만에 이미지 생성",
+                    description1: "당사 서비스는 고급 인공 지능 기술을 사용하여 텍스트 설명을 고유한 이미지로 변환합니다. 보고 싶은 것을 설명하고 스타일을 선택한 후 '생성'을 클릭하세요.",
+                    description2: "단 30초만에 개인 또는 상업 프로젝트에 사용할 수 있는 완성된 이미지를 얻을 수 있습니다. 그림 또는 디자인 기술이 필요하지 않습니다 - 당신의 상상력과 당사의 AI만 있으면 됩니다."
+                },
+                footer: {
+                    rights: "모든 권리 보유."
+                }
+            },
+            ja: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "アクセシビリティ設定",
+                    text: "テキ스트",
+                    buttons: "ボタン",
+                    background: "ページ背景",
+                    effects: "エフェクト",
+                    display: "表示",
+                    decrease: "減少",
+                    increase: "増加",
+                    default: "デフォルト",
+                    pattern1: "パターン1",
+                    pattern2: "パターン2",
+                    colorblind: "色覚補助モード",
+                    darkTheme: "ダークテーマ",
+                    reset: "設定をリセット"
+                },
+                effects: {
+                    none: "エフェクトなし",
+                    off: "無効",
+                    offDesc: "すべてのアニメーションを無効にする",
+                    bubbles: "バブル",
+                    bubblesDesc: "浮遊するカラフルな円",
+                    hearts: "ハート",
+                    heartsDesc: "落ちるハート",
+                    snow: "雪の結晶",
+                    snowDesc: "冬の雪景色",
+                    stars: "星",
+                    starsDesc: "きらめく星"
+                },
+                main: {
+                    createImage: "画像を作成",
+                    describeImage: "画像を説明：",
+                    promptPlaceholder: "例：山湖に映る美しい夕日と水面の反射",
+                    chooseStyle: "スタイルを選択：",
+                    generate: "画像を生成",
+                    preview: "プレビュー",
+                    previewPlaceholder: "生成された画像がここに表示されます",
+                    generatedImage: "生成された画像",
+                    generating: "画像を生成中...",
+                    download: "画像をダウンロード"
+                },
+                styles: {
+                    realism: "リアリズム",
+                    realismDesc: "写真のように正確な画像",
+                    concept: "コンセプトアート",
+                    conceptDesc: "ゲームや映画のための創造的なコンセプ트",
+                    minimalism: "ミニマリズム",
+                    minimalismDesc: "シンプルさとエレガンス",
+                    anime: "アニメ",
+                    animeDesc: "日本のアニメーションスタイル"
+                },
+                info: {
+                    title: "30秒で画像を作成",
+                    description1: "当サービスの高度な人工知能技術が、テキストの説明をユニークな画像に変換します。見たいものを説明し、スタイルを選んで「生成」をクリックするだけです。",
+                    description2: "わずか30秒で、個人または商業プロジェクトで使用できる完成画像が得られます。描画やデザインのスキルは不要です - あなたの想像力と当社のAIだけが必要です。"
+                },
+                footer: {
+                    rights: "全著作権所有。"
+                }
+            },
+            ar: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "إعدادات الوصول",
+                    text: "النص",
+                    buttons: "الأزرار",
+                    background: "خلفية الصفحة",
+                    effects: "التأثيرات",
+                    display: "العرض",
+                    decrease: "تقليل",
+                    increase: "زيادة",
+                    default: "افتراضي",
+                    pattern1: "النمط 1",
+                    pattern2: "النمط 2",
+                    colorblind: "وضع عمى الألوان",
+                    darkTheme: "الوضع الداكن",
+                    reset: "إعادة الضبط"
+                },
+                effects: {
+                    none: "بدون تأثيرات",
+                    off: "معطل",
+                    offDesc: "تعطيل جميع الرسوم المتحركة",
+                    bubbles: "فقاعات",
+                    bubblesDesc: "دوائر ملونة عائمة",
+                    hearts: "قلوب",
+                    heartsDesc: "قلوب متساقطة",
+                    snow: "رقاقات الثلج",
+                    snowDesc: "عاصفة ثلجية شتوية",
+                    stars: "نجوم",
+                    starsDesc: "نجوم متلألئة"
+                },
+                main: {
+                    createImage: "أنشئ صورتك",
+                    describeImage: "صف صورتك:",
+                    promptPlaceholder: "على سبيل المثال: غروب جميل فوق بحيرة جبلية مع انعكاس في الماء",
+                    chooseStyle: "اختر النمط:",
+                    generate: "إنشاء الصورة",
+                    preview: "معاينة",
+                    previewPlaceholder: "ستظهر صورتك المُنشأة هنا",
+                    generatedImage: "الصورة المُنشأة",
+                    generating: "جاري إنشاء صورتك...",
+                    download: "تحميل الصورة"
+                },
+                styles: {
+                    realism: "الواقعية",
+                    realismDesc: "صور دقيقة كالصور الفوتوغرافية",
+                    concept: "فن التصور",
+                    conceptDesc: "مفاهيم إبداعية للألعاب والأفلام",
+                    minimalism: "التبسيطية",
+                    minimalismDesc: "البساطة والأناقة",
+                    anime: "الأنمي",
+                    animeDesc: "بأسلوب الرسوم اليابانية"
+                },
+                info: {
+                    title: "أنشئ الصور في 30 ثانية",
+                    description1: "تستخدم خدمتنا تقنيات الذكاء الاصطناعي المتقدمة لتحويل أوصافك النصية إلى صور فريدة. ما عليك سوى وصف ما تريد رؤيته، واختيار النمط والنقر على 'إنشاء'.",
+                    description2: "في 30 ثانية فقط، ستحصل على صورة جاهزة يمكن استخدامها للمشاريع الشخصية أو التجارية. لا حاجة لمهارات الرسم أو التصميم - فقط خيالك وذكائنا الاصطناعي."
+                },
+                footer: {
+                    rights: "جميع الحقوق محفوظة."
+                }
+            },
+            es: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Configuración de Accesibilidad",
+                    text: "Texto",
+                    buttons: "Botones",
+                    background: "Fondo de Página",
+                    effects: "Efectos",
+                    display: "Pantalla",
+                    decrease: "Disminuir",
+                    increase: "Aumentar",
+                    default: "Predeterminado",
+                    pattern1: "Patrón 1",
+                    pattern2: "Patrón 2",
+                    colorblind: "Modo para Daltónicos",
+                    darkTheme: "Tema Oscuro",
+                    reset: "Restablecer Configuración"
+                },
+                effects: {
+                    none: "Sin Efectos",
+                    off: "Desactivado",
+                    offDesc: "Desactivar todas las animaciones",
+                    bubbles: "Burbujas",
+                    bubblesDesc: "Círculos de colores flotantes",
+                    hearts: "Corazones",
+                    heartsDesc: "Corazones cayendo",
+                    snow: "Copos de Nieve",
+                    snowDesc: "Tormenta de nieve invernal",
+                    stars: "Estrellas",
+                    starsDesc: "Estrellas centelleantes"
+                },
+                main: {
+                    createImage: "Crea Tu Imagen",
+                    describeImage: "Describe tu imagen:",
+                    promptPlaceholder: "Por ejemplo: Hermoso atardecer sobre un lago de montaña con reflejo en el agua",
+                    chooseStyle: "Elige el estilo:",
+                    generate: "Generar Imagen",
+                    preview: "Vista Previa",
+                    previewPlaceholder: "Tu imagen generada aparecerá aquí",
+                    generatedImage: "Imagen generada",
+                    generating: "Generando tu imagen...",
+                    download: "Descargar Imagen"
+                },
+                styles: {
+                    realism: "Realismo",
+                    realismDesc: "Imágenes fotográficamente precisas",
+                    concept: "Arte Conceptual",
+                    conceptDesc: "Conceptos creativos para juegos y películas",
+                    minimalism: "Minimalismo",
+                    minimalismDesc: "Simplicidad y elegancia",
+                    anime: "Anime",
+                    animeDesc: "En estilo de animación japonesa"
+                },
+                info: {
+                    title: "Crea Imágenes en 30 Segundos",
+                    description1: "Nuestro servicio utiliza tecnologías avanzadas de inteligencia artificial para transformar tus descripciones de texto en imágenes únicas. Solo describe lo que quieres ver, elige un estilo y haz clic en 'Generar'.",
+                    description2: "En solo 30 segundos obtendrás una imagen lista para usar que puede ser utilizada para proyectos personales o comerciales. No se requieren habilidades de dibujo o diseño, solo tu imaginación y nuestra IA."
+                },
+                footer: {
+                    rights: "Todos los derechos reservados."
+                }
+            },
+            fr: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Paramètres d'Accessibilité",
+                    text: "Texte",
+                    buttons: "Boutons",
+                    background: "Arrière-plan de la Page",
+                    effects: "Effets",
+                    display: "Affichage",
+                    decrease: "Diminuer",
+                    increase: "Augmenter",
+                    default: "Par Défaut",
+                    pattern1: "Motif 1",
+                    pattern2: "Motif 2",
+                    colorblind: "Mode Daltonien",
+                    darkTheme: "Thème Sombre",
+                    reset: "Réinitialiser les Paramètres"
+                },
+                effects: {
+                    none: "Aucun Effet",
+                    off: "Désactivé",
+                    offDesc: "Désactiver toutes les animaciones",
+                    bubbles: "Bulles",
+                    bubblesDesc: "Cercles colorés flottants",
+                    hearts: "Cœurs",
+                    heartsDesc: "Cœurs tombants",
+                    snow: "Flocons de Neige",
+                    snowDesc: "Tempête de neige hivernale",
+                    stars: "Étoiles",
+                    starsDesc: "Étoiles scintillantes"
+                },
+                main: {
+                    createImage: "Créez Votre Image",
+                    describeImage: "Décrivez votre image:",
+                    promptPlaceholder: "Par exemple: Beau coucher de soleil sur un lac de montagne avec reflet dans l'eau",
+                    chooseStyle: "Choisissez le style:",
+                    generate: "Générer l'Image",
+                    preview: "Aperçu",
+                    previewPlaceholder: "Votre image générée apparaîtra ici",
+                    generatedImage: "Image générée",
+                    generating: "Génération de votre image...",
+                    download: "Télécharger l'Image"
+                },
+                styles: {
+                    realism: "Réalisme",
+                    realismDesc: "Images photographiquement précises",
+                    concept: "Art Conceptuel",
+                    conceptDesc: "Concepts créatifs pour jeux et films",
+                    minimalism: "Minimalisme",
+                    minimalismDesc: "Simplicité et élégance",
+                    anime: "Anime",
+                    animeDesc: "Dans le style d'animation japonaise"
+                },
+                info: {
+                    title: "Créez des Images en 30 Secondes",
+                    description1: "Notre service utilise des technologies avancées d'intelligence artificielle pour transformer vos descriptions textuelles en images uniques. Décrivez simplement ce que vous voulez voir, choisissez un style et cliquez sur 'Générer'.",
+                    description2: "En seulement 30 secondes, vous obtiendrez une image prête à l'emploi qui peut être utilisée pour des projets personnels ou commerciaux. Aucune compétence en dessin ou en design n'est requise - juste votre imagination et notre IA."
+                },
+                footer: {
+                    rights: "Tous droits réservés."
+                }
+            },
+            de: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Barrierefreiheitseinstellungen",
+                    text: "Text",
+                    buttons: "Schaltflächen",
+                    background: "Seitenhintergrund",
+                    effects: "Effekte",
+                    display: "Anzeige",
+                    decrease: "Verringern",
+                    increase: "Erhöhen",
+                    default: "Standard",
+                    pattern1: "Muster 1",
+                    pattern2: "Muster 2",
+                    colorblind: "Farbenblind-Modus",
+                    darkTheme: "Dunkles Thema",
+                    reset: "Einstellungen zurücksetzen"
+                },
+                effects: {
+                    none: "Keine Effekte",
+                    off: "Deaktiviert",
+                    offDesc: "Alle Animationen deaktivieren",
+                    bubbles: "Blasen",
+                    bubblesDesc: "Schwebende farbige Kreise",
+                    hearts: "Herzen",
+                    heartsDesc: "Fallende Herzen",
+                    snow: "Schneeflocken",
+                    snowDesc: "Winterlicher Schneesturm",
+                    stars: "Sterne",
+                    starsDesc: "Funkelnde Sterne"
+                },
+                main: {
+                    createImage: "Erstellen Sie Ihr Bild",
+                    describeImage: "Beschreiben Sie Ihr Bild:",
+                    promptPlaceholder: "Zum Beispiel: Schöner Sonnenuntergang über einem Bergsee mit Spiegelung im Wasser",
+                    chooseStyle: "Stil wählen:",
+                    generate: "Bild generieren",
+                    preview: "Vorschau",
+                    previewPlaceholder: "Ihr generiertes Bild wird hier erscheinen",
+                    generatedImage: "Generiertes Bild",
+                    generating: "Generiere Ihr Bild...",
+                    download: "Bild herunterladen"
+                },
+                styles: {
+                    realism: "Realismus",
+                    realismDesc: "Fotografisch genaue Bilder",
+                    concept: "Konzeptkunst",
+                    conceptDesc: "Kreative Konzepte für Spiele und Filme",
+                    minimalism: "Minimalismus",
+                    minimalismDesc: "Einfachheit und Eleganz",
+                    anime: "Anime",
+                    animeDesc: "Im japanischen Animationsstil"
+                },
+                info: {
+                    title: "Erstellen Sie Bilder in 30 Sekunden",
+                    description1: "Unser Service verwendet fortschrittliche KI-Technologien, um Ihre Textbeschreibungen in einzigartige Bilder zu verwandeln. Beschreiben Sie einfach, was Sie sehen möchten, wählen Sie einen Stil und klicken Sie auf 'Generieren'.",
+                    description2: "In nur 30 Sekunden erhalten Sie ein fertiges Bild, das für persönliche oder kommerzielle Projekte verwendet werden kann. Keine Zeichen- oder Designkenntnisse erforderlich - nur Ihre Fantasie und unsere KI."
+                },
+                footer: {
+                    rights: "Alle Rechte vorbehalten."
+                }
+            },
+            pt: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "Configurações de Acessibilidade",
+                    text: "Texto",
+                    buttons: "Botões",
+                    background: "Fundo da Página",
+                    effects: "Efeitos",
+                    display: "Exibição",
+                    decrease: "Diminuir",
+                    increase: "Aumentar",
+                    default: "Padrão",
+                    pattern1: "Padrão 1",
+                    pattern2: "Padrão 2",
+                    colorblind: "Modo para Daltônicos",
+                    darkTheme: "Tema Escuro",
+                    reset: "Redefinir Configurações"
+                },
+                effects: {
+                    none: "Sem Efeitos",
+                    off: "Desativado",
+                    offDesc: "Desativar todas as animações",
+                    bubbles: "Bolhas",
+                    bubblesDesc: "Círculos coloridos flutuantes",
+                    hearts: "Corações",
+                    heartsDesc: "Corações caindo",
+                    snow: "Flocos de Neve",
+                    snowDesc: "Tempestade de neve invernal",
+                    stars: "Estrelas",
+                    starsDesc: "Estrelas cintilantes"
+                },
+                main: {
+                    createImage: "Crie Sua Imagem",
+                    describeImage: "Descreva sua imagem:",
+                    promptPlaceholder: "Por exemplo: Pôr do sol bonito sobre um lago de montanha com reflexo na água",
+                    chooseStyle: "Escolha o estilo:",
+                    generate: "Gerar Imagem",
+                    preview: "Pré-visualização",
+                    previewPlaceholder: "Sua imagem gerada aparecerá aqui",
+                    generatedImage: "Imagem gerada",
+                    generating: "Gerando sua imagem...",
+                    download: "Baixar Imagem"
+                },
+                styles: {
+                    realism: "Realismo",
+                    realismDesc: "Imagens fotograficamente precisas",
+                    concept: "Arte Conceitual",
+                    conceptDesc: "Conceitos criativos para jogos e filmes",
+                    minimalism: "Minimalismo",
+                    minimalismDesc: "Simplicidade e elegância",
+                    anime: "Anime",
+                    animeDesc: "No estilo de animação japonesa"
+                },
+                info: {
+                    title: "Crie Imagens em 30 Segundos",
+                    description1: "Nosso serviço usa tecnologias avançadas de inteligência artificial para transformar suas descrições de texto em imagens únicas. Basta descrever o que você quer ver, escolher um estilo e clicar em 'Gerar'.",
+                    description2: "Em apenas 30 segundos, você obterá uma imagem pronta para uso que pode ser usada para projetos pessoais ou comerciais. Nenhuma habilidade de desenho ou design é necessária - apenas sua imaginação e nossa IA."
+                },
+                footer: {
+                    rights: "Todos os direitos reservados."
+                }
+            },
+            hi: {
+                siteTitle: "Remake AI",
+                settings: {
+                    title: "एक्सेसिबिलिटी सेटिंग्स",
+                    text: "टेक्स्ट",
+                    buttons: "बटन",
+                    background: "पृष्ठ पृष्ठभूमि",
+                    effects: "प्रभाव",
+                    display: "डिस्प्ले",
+                    decrease: "घटाएं",
+                    increase: "बढ़ाएं",
+                    default: "डिफ़ॉल्ट",
+                    pattern1: "पैटर्न 1",
+                    pattern2: "पैटर्न 2",
+                    colorblind: "कलरब्लाइंड मोड",
+                    darkTheme: "डार्क थीम",
+                    reset: "सेटिंग्स रीसेट करें"
+                },
+                effects: {
+                    none: "कोई प्रभाव नहीं",
+                    off: "अक्षम",
+                    offDesc: "सभी एनिमेशन अक्षम करें",
+                    bubbles: "बुलबुले",
+                    bubblesDesc: "तैरते रंगीन सर्कल",
+                    hearts: "दिल",
+                    heartsDesc: "गिरते दिल",
+                    snow: "हिमपात",
+                    snowDesc: "सर्दियों की बर्फबारी",
+                    stars: "तारे",
+                    starsDesc: "टिमटिमाते तारे"
+                },
+                main: {
+                    createImage: "अपनी छवि बनाएं",
+                    describeImage: "अपनी छवि का वर्णन करें:",
+                    promptPlaceholder: "उदाहरण: पानी में प्रतिबिंब के साथ एक पहाड़ी झील पर सुंदर सूर्यास्त",
+                    chooseStyle: "शैली चुनें:",
+                    generate: "छवि जनरेट करें",
+                    preview: "पूर्वावलोकन",
+                    previewPlaceholder: "आपकी जनरेट की गई छवि यहां दिखाई देगी",
+                    generatedImage: "जनरेट की गई छवि",
+                    generating: "आपकी छवि जनरेट की जा रही है...",
+                    download: "छवि डाउनलोड करें"
+                },
+                styles: {
+                    realism: "यथार्थवाद",
+                    realismDesc: "फोटोग्राफिक रूप से सटीक छवियां",
+                    concept: "कॉन्सेप्ट आर्ट",
+                    conceptDesc: "गेम और फिल्मों के लिए रचनात्मक अवधारणाएं",
+                    minimalism: "मिनिमलिज्म",
+                    minimalismDesc: "सादगी और शिष्टता",
+                    anime: "एनिमे",
+                    animeDesc: "जापानी एनिमेशन शैली में"
+                },
+                info: {
+                    title: "30 सेकंड में छवियां बनाएं",
+                    description1: "हमारी सेवा आपके टेक्स्ट विवरणों को अद्वितीय छवियों में बदलने के लिए उन्नत आर्टिफिशियल इंटेलिजेंस तकनीकों का उपयोग करती है। बस वर्णन करें कि आप क्या देखना चाहते हैं, एक शैली चुनें और 'जनरेट' पर क्लिक करें।",
+                    description2: "केवल 30 सेकंड में, आपको एक तैयार छवि मिलेगी जिसका उपयोग व्यक्तिगत या व्यावसायिक परियोजनाओं के लिए किया जा सकता है। किसी ड्राइंग या डिजाइन कौशल की आवश्यकता नहीं है - बस आपकी कल्पना और हमारी AI।"
+                },
+                footer: {
+                    rights: "सर्वाधिकार सुरक्षित।"
+                }
+            }
+        };
+
+        const flagMap = {
+            'ru': '🇷🇺',
+            'en': '🇺🇸', 
+            'zh': '🇨🇳',
+            'ko': '🇰🇷',
+            'ja': '🇯🇵',
+            'ar': '🇸🇦',
+            'es': '🇪🇸',
+            'fr': '🇫🇷',
+            'de': '🇩🇪',
+            'pt': '🇵🇹',
+            'hi': '🇮🇳'
+        };
+
+        function getPatternStyles(patternNumber, isDarkTheme = false, isColorblindMode = false) {
+            let colors = {
+                white: '#ffffff',
+                lightGray: '#f4f8fd',
+                gray: '#d8e6f8',
+                darkGray: '#23272c',
+                primary: '#0483e4',
+                primaryLight: '#63a3e5',
+                primaryDark: '#046bd4',
+                accent1: '#1484dc',
+                accent2: '#3897e4',
+                accent3: '#2e81da'
+            };
+
+            if (isDarkTheme) {
+                colors.white = '#23272c';
+                colors.lightGray = '#353b43';
+                colors.gray = '#464f59';
+            }
+
+            if (isColorblindMode) {
+                colors.primary = '#0072B2';
+                colors.primaryLight = '#56B4E9';
+                colors.primaryDark = '#E69F00';
+                colors.accent1 = '#009E73';
+                colors.accent2 = '#F0E442';
+                colors.accent3 = '#D55E00';
+            }
+
+            switch(patternNumber) {
+                case 1:
+                    return {
+                        background: `linear-gradient(${colors.white} 40%, rgba(255,255,255,0) 40%), linear-gradient(${colors.primaryLight}, ${colors.accent1})`,
+                        backgroundSize: '1em 1em, 100%',
+                        backgroundColor: colors.accent1
+                    };
+                case 2:
+                    return {
+                        background: `linear-gradient(90deg, rgba(0,0,0,.1) 30%, rgba(0,0,0,0) 30%), linear-gradient(${colors.primary}, rgba(255,255,255,0))`,
+                        backgroundSize: '2em 2em, 100%',
+                        backgroundColor: colors.accent2
+                    };
+                case 3:
+                    return {
+                        background: `linear-gradient(90deg, ${colors.primaryDark} 20%, ${colors.white} 20%, ${colors.white} 40%, ${colors.accent2} 40%, ${colors.accent2} 60%, ${colors.accent3} 60%, ${colors.accent3} 80%, ${colors.primary} 80%)`,
+                        backgroundSize: '100% 0.4em',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: '0 0, 0 100%',
+                        backgroundColor: colors.white
+                    };
+                case 4:
+                    return {
+                        background: `linear-gradient(90deg, ${colors.accent2} 50%, rgba(255,255,255,0) 50%), linear-gradient(90deg, ${colors.primary} 50%, rgba(255,255,255,0) 50%), linear-gradient(90deg, ${colors.accent1} 50%, rgba(255,255,255,0) 50%), linear-gradient(90deg, ${colors.primaryDark} 50%, rgba(255,255,255,0) 50%)`,
+                        backgroundSize: '7em 7em, 5em 5em, 3em 3em, 1em 1em',
+                        backgroundColor: colors.lightGray
+                    };
+                case 5:
+                    return {
+                        background: `linear-gradient(-45deg, rgba(0,0,0,0) 49.9%, ${colors.primary} 49.9%, ${colors.primary} 60%, rgba(0,0,0,0) 60%), linear-gradient(-45deg, ${colors.primary} 10%, rgba(0,0,0,0) 10%)`,
+                        backgroundSize: '2em 2em',
+                        backgroundColor: colors.primaryLight
+                    };
+                case 6:
+                    return {
+                        background: `linear-gradient(to left top, rgba(255,255,255,0) 48.9%, ${colors.primaryDark} 51%, ${colors.primaryDark} 78%, rgba(255,255,255,0) 80%), linear-gradient(to left top, ${colors.primaryDark} 28%, rgba(255,255,255,0) 30%)`,
+                        backgroundSize: '2em 6em',
+                        backgroundColor: colors.accent1
+                    };
+                case 7:
+                    return {
+                        background: `linear-gradient(to right top, rgba(255,255,255,0) 49.9%, ${colors.accent2} 52%, ${colors.accent2} 68%, rgba(255,255,255,0) 70%), linear-gradient(to right top, ${colors.accent2} 18%, rgba(255,255,255,0) 20%)`,
+                        backgroundSize: '1em 5em',
+                        backgroundColor: colors.primaryLight
+                    };
+                case 8:
+                    return {
+                        background: `linear-gradient(to left top, rgba(255,255,255,0) 49%, ${colors.primary} 52%, ${colors.primary} 56%, rgba(255,255,255,0) 60%), linear-gradient(to left top, ${colors.primary} 6%, rgba(255,255,255,0) 10%)`,
+                        backgroundSize: '11em 1em',
+                        backgroundColor: colors.accent3
+                    };
+                case 11:
+                    return {
+                        background: `linear-gradient(45deg, ${colors.lightGray} 25%, rgba(255,255,255,0) 25%), linear-gradient(45deg, ${colors.lightGray} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(-45deg, ${colors.gray} 25%, rgba(255,255,255,0) 25%), linear-gradient(-45deg, ${colors.gray} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(135deg, ${colors.primary} 25%, rgba(255,255,255,0) 25%), linear-gradient(135deg, ${colors.primary} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(-135deg, ${colors.accent2} 25%, rgba(255,255,255,0) 25%), linear-gradient(-135deg, ${colors.accent2} 25%, rgba(255,255,255,0) 25%) 3em -3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.white
+                    };
+                case 12:
+                    return {
+                        background: `linear-gradient(to right top, ${colors.accent3} 15%, rgba(255,255,255,0) 15%) 4em 8em, linear-gradient(to left top, ${colors.accent3} 15%, rgba(255,255,255,0) 15%) 4em 8em, linear-gradient(to left bottom, ${colors.accent3} 15%, rgba(255,255,255,0) 15%) 4em 8em, linear-gradient(to right bottom, ${colors.accent3} 15%, rgba(255,255,255,0) 15%) 4em 8em, linear-gradient(to right top, ${colors.accent1} 15%, rgba(255,255,255,0) 15%) 0 0, linear-gradient(to left top, ${colors.accent1} 15%, rgba(255,255,255,0) 15%) 0 0, linear-gradient(to right bottom, ${colors.accent1} 15%, rgba(255,255,255,0) 15%) 0 0, linear-gradient(to left bottom, ${colors.accent1} 15%, rgba(255,255,255,0) 15%) 0 0, linear-gradient(to right top, ${colors.primaryLight} 25%, rgba(255,255,255,0) 25%) 0 0, linear-gradient(to left top, ${colors.primaryLight} 25%, rgba(255,255,255,0) 25%) 0 0, linear-gradient(to right bottom, ${colors.primaryLight} 25%, rgba(255,255,255,0) 25%) 0 0, linear-gradient(to left bottom, ${colors.primaryLight} 25%, rgba(255,255,255,0) 25%) 0 0`,
+                        backgroundSize: '4em 8em',
+                        backgroundColor: colors.lightGray
+                    };
+                case 13:
+                    return {
+                        background: `linear-gradient(90deg, rgba(255,255,255,0) 93%, ${colors.gray} 93%, ${colors.gray} 100%), linear-gradient(90deg, ${colors.accent2} 5%, rgba(255,255,255,0) 5%), linear-gradient(${colors.accent2} 5%, rgba(255,255,255,0) 5%), linear-gradient(rgba(255,255,255,0) 90%, ${colors.primary} 90%, ${colors.primary} 100%), linear-gradient(rgba(255,255,255,0) 35%, ${colors.lightGray} 35%, ${colors.lightGray} 45%, rgba(255,255,255,0) 45%, rgba(255,255,255,0) 55%, ${colors.accent2} 55%, ${colors.accent2} 70%, rgba(255,255,255,0) 70%), linear-gradient(90deg, rgba(255,255,255,0) 35%, ${colors.lightGray} 35%, ${colors.lightGray} 45%, rgba(255,255,255,0) 45%, rgba(255,255,255,0) 55%, ${colors.accent2} 55%, ${colors.accent2} 70%, rgba(255,255,255,0) 70%), linear-gradient(rgba(255,255,255,0) 55%, ${colors.lightGray} 55%, ${colors.lightGray} 60%, rgba(255,255,255,0) 60%), linear-gradient(90deg, rgba(255,255,255,0) 55%, ${colors.lightGray} 55%, ${colors.lightGray} 60%, rgba(255,255,255,0) 60%), linear-gradient(rgba(255,255,255,0) 20%, ${colors.gray} 20%, ${colors.gray} 80%, rgba(255,255,255,0) 80%), linear-gradient(90deg, rgba(255,255,255,0) 20%, ${colors.primary} 20%, ${colors.primary} 80%, rgba(255,255,255,0) 80%), linear-gradient(rgba(255,255,255,0) 10%, ${colors.accent2} 10%, ${colors.accent2} 35%, rgba(255,255,255,0) 35%), linear-gradient(90deg, rgba(255,255,255,0) 10%, ${colors.accent2} 10%, ${colors.accent2} 35%, rgba(255,255,255,0) 35%)`,
+                        backgroundSize: '14em 14em',
+                        backgroundColor: colors.white
+                    };
+                case 14:
+                    return {
+                        background: `linear-gradient(to left bottom, rgba(255,255,255,0) 0.4em, ${colors.primaryDark} 0.4em, ${colors.primaryDark} 1.02em, rgba(255,255,255,0) 1.02em) 0 0, linear-gradient(to right top, rgba(255,255,255,0) 0.4em, ${colors.primaryDark} 0.4em, ${colors.primaryDark} 1.02em, rgba(255,255,255,0) 1.02em) 3em 0, linear-gradient(to left bottom, rgba(255,255,255,0) 0.4em, ${colors.accent1} 0.4em, ${colors.accent1} 1.02em, rgba(255,255,255,0) 0.4em) 0 1.02em, linear-gradient(to right top, rgba(255,255,255,0) 0.4em, ${colors.accent1} 0.4em, ${colors.accent1} 1.02em, rgba(255,255,255,0) 0.4em) 3em 1.02em, linear-gradient(to left bottom, rgba(255,255,255,0) 0.4em, ${colors.primary} 0.4em, ${colors.primary} 1.02em, rgba(255,255,255,0) 0.4em) 0 2.04em, linear-gradient(to right top, rgba(255,255,255,0) 0.4em, ${colors.primary} 0.4em, ${colors.primary} 1.02em, rgba(255,255,255,0) 0.4em) 3em 2.04em, linear-gradient(to left bottom, rgba(255,255,255,0) 0.4em, ${colors.accent2} 0.4em, ${colors.accent2} 1.02em, rgba(255,255,255,0) 0.4em) 0 3.06em, linear-gradient(to right top, rgba(255,255,255,0) 0.4em, ${colors.accent2} 0.4em, ${colors.accent2} 1.02em, rgba(255,255,255,0) 0.4em) 3em 3.06em, linear-gradient(to right bottom, rgba(255,255,255,0) 0.4em, ${colors.accent2} 0.4em, ${colors.accent2} 1.02em, rgba(255,255,255,0) 1.02em) 0 0, linear-gradient(to left top, rgba(255,255,255,0) 0.4em, ${colors.accent2} 0.4em, ${colors.accent2} 1.02em, rgba(255,255,255,0) 1.02em) 3em 0, linear-gradient(to right bottom, rgba(255,255,255,0) 0.4em, ${colors.primaryDark} 0.4em, ${colors.primaryDark} 1.02em, rgba(255,255,255,0) 0.4em) 0 1.02em, linear-gradient(to left top, rgba(255,255,255,0) 0.4em, ${colors.primaryDark} 0.4em, ${colors.primaryDark} 1.02em, rgba(255,255,255,0) 0.4em) 3em 1.02em, linear-gradient(to right bottom, rgba(255,255,255,0) 0.4em, ${colors.accent1} 0.4em, ${colors.accent1} 1.02em, rgba(255,255,255,0) 0.4em) 0 2.04em, linear-gradient(to left top, rgba(255,255,255,0) 0.4em, ${colors.accent1} 0.4em, ${colors.accent1} 1.02em, rgba(255,255,255,0) 0.4em) 3em 2.04em, linear-gradient(to right bottom, rgba(255,255,255,0) 0.4em, ${colors.primary} 0.4em, ${colors.primary} 1.02em, rgba(255,255,255,0) 0.4em) 0 3.06em, linear-gradient(to left top, rgba(255,255,255,0) 0.4em, ${colors.primary} 0.4em, ${colors.primary} 1.02em, rgba(255,255,255,0) 0.4em) 3em 3.06em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.lightGray
+                    };
+                case 15:
+                    return {
+                        background: `radial-gradient(circle, ${colors.white} 0.33em, rgba(255,255,255,0) 0.33em) 0 0, radial-gradient(circle, ${colors.white} 0.33em, rgba(255,255,255,0) 0.33em) 3em 3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.darkGray
+                    };
+                case 16:
+                    return {
+                        background: `radial-gradient(circle, ${colors.accent1} 0.9em, rgba(255,255,255,0) 0.9em, rgba(255,255,255,0) 1.5em, ${colors.gray} 1.5em, ${colors.gray} 1.8em, rgba(255,255,255,0) 1.8em) 0 0, radial-gradient(circle, ${colors.accent2} 0.9em, rgba(255,255,255,0) 0.9em, rgba(255,255,255,0) 1.5em, ${colors.lightGray} 1.5em, ${colors.lightGray} 1.8em, rgba(255,255,255,0) 1.8em) 3em 3em, radial-gradient(circle, ${colors.lightGray} 0.3em, rgba(255,255,255,0) 0.3em) 3em 0, radial-gradient(circle, ${colors.gray} 0.24em, rgba(255,255,255,0) 0.24em) 0 3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.white
+                    };
+                case 17:
+                    return {
+                        background: `linear-gradient(135deg, ${colors.primary} 1.2em, rgba(255,255,255,0) 1.2em) 0 4em, linear-gradient(-135deg, ${colors.primary} 1.2em, rgba(255,255,255,0) 1.2em) 0 4em, radial-gradient(circle at 5.16em 11.1em, ${colors.primary} 2.04em, rgba(255,255,255,0) 2.088em) 0 -4em, radial-gradient(circle at 0.84em 11.1em, ${colors.primary} 2.04em, rgba(255,255,255,0) 2.088em) 0 -4em, linear-gradient(135deg, ${colors.accent1} 1.2em, rgba(255,255,255,0) 1.2em) 4em 0, linear-gradient(-135deg, ${colors.accent1} 1.2em, rgba(255,255,255,0) 1.2em) 4em 0, radial-gradient(circle at 5.16em 11.1em, ${colors.accent1} 2.04em, rgba(255,255,255,0) 2.088em) 4em 0, radial-gradient(circle at 0.84em 11.1em, ${colors.accent1} 2.04em, rgba(255,255,255,0) 2.088em) 4em 0`,
+                        backgroundSize: '8em 8em',
+                        backgroundColor: colors.lightGray
+                    };
+                case 18:
+                    return {
+                        background: `linear-gradient(68deg, ${colors.gray} 0.9em, rgba(255,255,255,0) 1.1em) 3em -3em, linear-gradient(-68deg, ${colors.gray} 0.9em, rgba(255,255,255,0) 1.1em) -3em -3em, radial-gradient(circle, ${colors.gray} 0.9em, rgba(255,255,255,0) 1.1em) 0 0, linear-gradient(68deg, ${colors.accent1} 0.9em, rgba(255,255,255,0) 1.1em) 0 0, linear-gradient(-68deg, ${colors.accent1} 0.9em, rgba(255,255,255,0) 1.1em) 0 0, radial-gradient(circle, ${colors.accent1} 0.9em, rgba(255,255,255,0) 1.1em) 3em 3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.white
+                    };
+                case 19:
+                    return {
+                        background: `radial-gradient(circle at right, rgba(255,255,255,0) 1.2em, ${colors.lightGray} 1.2em, ${colors.lightGray} 1.74em, rgba(255,255,255,0) 1.74em) 0 0, radial-gradient(circle at left, rgba(255,255,255,0) 1.2em, ${colors.lightGray} 1.2em, ${colors.lightGray} 1.74em, rgba(255,255,255,0) 1.74em) 0 3em, radial-gradient(circle at right, rgba(255,255,255,0) 1.2em, ${colors.primary} 1.2em, ${colors.primary} 1.74em, rgba(255,255,255,0) 1.74em) 1.56em 0, radial-gradient(circle at left, rgba(255,255,255,0) 1.2em, ${colors.primary} 1.2em, ${colors.primary} 1.74em, rgba(255,255,255,0) 1.74em) 1.56em 3em, radial-gradient(circle at right, rgba(255,255,255,0) 1.2em, ${colors.accent3} 1.2em, ${colors.accent3} 1.74em, rgba(255,255,255,0) 1.74em) 3.12em 0, radial-gradient(circle at left, rgba(255,255,255,0) 1.2em, ${colors.accent3} 1.2em, ${colors.accent3} 1.74em, rgba(255,255,255,0) 1.74em) 3.12em 3em, radial-gradient(circle at right, rgba(255,255,255,0) 1.2em, ${colors.accent1} 1.2em, ${colors.accent1} 1.74em, rgba(255,255,255,0) 1.74em) 4.68em 0, radial-gradient(circle at left, rgba(255,255,255,0) 1.2em, ${colors.accent1} 1.2em, ${colors.accent1} 1.74em, rgba(255,255,255,0) 1.74em) 4.68em 3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.darkGray
+                    };
+                case 20:
+                    return {
+                        background: `radial-gradient(4rem, rgba(255,255,255,0) 80%, ${colors.gray} 80%, ${colors.gray} 99%, rgba(255,255,255, 0)) 0 0, radial-gradient(4rem, rgba(255,255,255,0) 80%, ${colors.gray} 80%, ${colors.gray} 99%, rgba(255,255,255, 0)) 4em 4em, radial-gradient(4.7rem, rgba(255,255,255,0) 50%, ${colors.accent1} 50%, ${colors.accent1} 75%, ${colors.accent1} 99%, rgba(255,255,255, 0)) 4em 4em, radial-gradient(4.7rem, rgba(255,255,255,0) 50%, ${colors.accent1} 50%, ${colors.white} 75%, ${colors.accent1} 99%, rgba(255,255,255, 0)) 0 0`,
+                        backgroundSize: '8rem 8rem',
+                        backgroundColor: colors.white
+                    };
+                case 21:
+                    return {
+                        background: `linear-gradient(45deg, ${colors.lightGray} 25%, rgba(255,255,255,0) 25%), linear-gradient(45deg, ${colors.lightGray} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(-45deg, ${colors.gray} 25%, rgba(255,255,255,0) 25%), linear-gradient(-45deg, ${colors.gray} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(135deg, ${colors.primary} 25%, rgba(255,255,255,0) 25%), linear-gradient(135deg, ${colors.primary} 25%, rgba(255,255,255,0) 25%) 3em -3em, linear-gradient(-135deg, ${colors.accent2} 25%, rgba(255,255,255,0) 25%), linear-gradient(-135deg, ${colors.accent2} 25%, rgba(255,255,255,0) 25%) 3em -3em`,
+                        backgroundSize: '6em 6em',
+                        backgroundColor: colors.white
+                    };
+                default:
+                    return {
+                        backgroundColor: 'var(--background-color)'
+                    };
+            }
+        }
+
+        function updatePatternPreviews() {
+            const isDarkTheme = document.body.classList.contains('dark-theme');
+            const isColorblindMode = document.body.classList.contains('colorblind-theme');
+            const previews = document.querySelectorAll('.pattern-preview');
+            
+            previews.forEach(preview => {
+                const patternNumber = parseInt(preview.getAttribute('data-pattern'));
+                const styles = getPatternStyles(patternNumber, isDarkTheme, isColorblindMode);
+                
+                Object.keys(styles).forEach(style => {
+                    preview.style[style] = styles[style];
+                });
+            });
+        }
+
+        function applyBackground(bgType) {
+            const body = document.body;
+            const isDarkTheme = document.body.classList.contains('dark-theme');
+            const isColorblindMode = document.body.classList.contains('colorblind-theme');
+            
+            body.style.background = '';
+            body.style.backgroundColor = '';
+            body.style.backgroundAttachment = '';
+            body.style.backgroundSize = '';
+            body.style.backgroundPosition = '';
+            
+            if (bgType === 'default') {
+                body.style.backgroundColor = 'var(--background-color)';
+            } else if (bgType.startsWith('pattern')) {
+                const patternNumber = parseInt(bgType.replace('pattern', ''));
+                const styles = getPatternStyles(patternNumber, isDarkTheme, isColorblindMode);
+                
+                Object.keys(styles).forEach(style => {
+                    body.style[style] = styles[style];
+                });
+            }
+            
+            localStorage.setItem('background', bgType);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const styleOptions = document.querySelectorAll('.style-option');
+            const generateBtn = document.getElementById('generateBtn');
+            const previewPlaceholder = document.getElementById('previewPlaceholder');
+            const previewImage = document.getElementById('previewImage');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const cellHeaders = document.querySelectorAll('.cell-header');
+            const decreaseTextBtn = document.getElementById('decreaseText');
+            const increaseTextBtn = document.getElementById('increaseText');
+            const textSizeIndicator = document.getElementById('textSizeIndicator');
+            const decreaseButtonsBtn = document.getElementById('decreaseButtons');
+            const increaseButtonsBtn = document.getElementById('increaseButtons');
+            const buttonSizeIndicator = document.getElementById('buttonSizeIndicator');
+            const colorblindToggle = document.getElementById('colorblindToggle');
+            const themeToggle = document.getElementById('themeToggle');
+            const resetSettingsBtn = document.getElementById('resetSettings');
+            const backgroundOptions = document.querySelectorAll('.background-option');
+            const effectOptions = document.querySelectorAll('.effect-option');
+            const languageBtn = document.getElementById('languageBtn');
+            const languageDropdown = document.getElementById('languageDropdown');
+            const currentLanguageFlag = document.getElementById('currentLanguageFlag');
+            const languageOptions = document.querySelectorAll('.language-option');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const languageIndicator = document.getElementById('languageIndicator');
+            
+            let selectedStyle = null;
+            let textSize = 1;
+            let buttonScale = 1;
+            let isColorblindMode = false;
+            let isDarkTheme = false;
+            let currentBackground = 'default';
+            let currentEffect = 'none';
+            let effectInterval = null;
+            let currentLanguage = 'ru';
+            let currentImageUrl = null;
+            let languageChanged = false;
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                document.documentElement.lang = lang;
+                currentLanguageFlag.textContent = flagMap[lang];
+                
+                if (languageChanged) {
+                    languageIndicator.classList.add('active');
+                    setTimeout(() => {
+                        languageIndicator.classList.remove('active');
+                    }, 2000);
+                }
+                
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    const keys = key.split('.');
+                    let translation = translations[lang];
+                    
+                    for (const k of keys) {
+                        translation = translation?.[k];
+                    }
+                    
+                    if (translation) {
+                        if (element.hasAttribute('placeholder')) {
+                            element.setAttribute('placeholder', translation);
+                        } else if (element.hasAttribute('alt') && element.getAttribute('alt') === '') {
+                            element.setAttribute('alt', translation);
+                        } else {
+                            element.textContent = translation;
+                        }
+                    }
+                });
+
+                languageOptions.forEach(option => {
+                    option.classList.remove('selected');
+                    if (option.getAttribute('data-lang') === lang) {
+                        option.classList.add('selected');
+                    }
+                });
+
+                localStorage.setItem('language', lang);
+                languageChanged = true;
+            }
+
+            function initializeSettings() {
+                const savedTextSize = localStorage.getItem('textSize');
+                const savedButtonScale = localStorage.getItem('buttonScale');
+                const savedColorblindMode = localStorage.getItem('colorblindMode');
+                const savedDarkTheme = localStorage.getItem('darkTheme');
+                const savedBackground = localStorage.getItem('background');
+                const savedEffect = localStorage.getItem('effect');
+                const savedLanguage = localStorage.getItem('language');
+                
+                if (savedTextSize) {
+                    textSize = parseFloat(savedTextSize);
+                    updateTextSizeIndicator();
+                    updateTextSize();
+                }
+                
+                if (savedButtonScale) {
+                    buttonScale = parseFloat(savedButtonScale);
+                    updateButtonSizeIndicator();
+                    updateButtonSize();
+                }
+                
+                if (savedColorblindMode === 'true') {
+                    isColorblindMode = true;
+                    colorblindToggle.checked = true;
+                    document.body.classList.add('colorblind-theme');
+                }
+                
+                if (savedDarkTheme === 'true') {
+                    isDarkTheme = true;
+                    themeToggle.checked = true;
+                    document.body.classList.add('dark-theme');
+                }
+                
+                if (savedBackground) {
+                    currentBackground = savedBackground;
+                    applyBackground(currentBackground);
+                    selectBackgroundOption(currentBackground);
+                }
+                
+                if (savedEffect) {
+                    currentEffect = savedEffect;
+                    applyEffect(currentEffect);
+                    selectEffectOption(savedEffect);
+                }
+
+                if (savedLanguage && translations[savedLanguage]) {
+                    currentLanguage = savedLanguage;
+                    setLanguage(savedLanguage);
+                }
+
+                updatePatternPreviews();
+            }
+            
+            function updateTextSize() {
+                document.documentElement.style.setProperty('--text-size', textSize + 'rem');
+                localStorage.setItem('textSize', textSize);
+            }
+            
+            function updateTextSizeIndicator() {
+                textSizeIndicator.textContent = Math.round(textSize * 100) + '%';
+            }
+            
+            function updateButtonSize() {
+                document.documentElement.style.setProperty('--button-scale', buttonScale);
+                localStorage.setItem('buttonScale', buttonScale);
+            }
+            
+            function updateButtonSizeIndicator() {
+                buttonSizeIndicator.textContent = Math.round(buttonScale * 100) + '%';
+            }
+            
+            function applyBackground(bgType) {
+                const body = document.body;
+                const isDarkTheme = document.body.classList.contains('dark-theme');
+                
+                body.style.background = '';
+                body.style.backgroundColor = '';
+                body.style.backgroundAttachment = '';
+                body.style.backgroundSize = '';
+                body.style.backgroundPosition = '';
+                
+                if (bgType === 'default') {
+                    body.style.backgroundColor = 'var(--background-color)';
+                } else if (bgType.startsWith('pattern')) {
+                    const patternNumber = parseInt(bgType.replace('pattern', ''));
+                    const styles = getPatternStyles(patternNumber, isDarkTheme);
+                    
+                    Object.keys(styles).forEach(style => {
+                        body.style[style] = styles[style];
+                    });
+                }
+                
+                localStorage.setItem('background', bgType);
+            }
+            
+            function selectBackgroundOption(bgType) {
+                backgroundOptions.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                const selectedOption = document.querySelector(`[data-bg="${bgType}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+            }
+            
+            function applyEffect(effectType) {
+                stopEffects();
+                currentEffect = effectType;
+                
+                switch(effectType) {
+                    case 'bubbles':
+                        effectInterval = setInterval(createBubble, 200);
+                        break;
+                    case 'hearts':
+                        effectInterval = setInterval(createHeart, 300);
+                        break;
+                    case 'snow':
+                        effectInterval = setInterval(createSnow, 150);
+                        break;
+                    case 'stars':
+                        effectInterval = setInterval(createStar, 250);
+                        break;
+                }
+                
+                localStorage.setItem('effect', effectType);
+            }
+            
+            function stopEffects() {
+                if (effectInterval) {
+                    clearInterval(effectInterval);
+                    effectInterval = null;
+                }
+            }
+            
+            function selectEffectOption(effectType) {
+                effectOptions.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                const selectedOption = document.querySelector(`[data-effect="${effectType}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+            }
+            
+            function createBubble() {
+                const circle = document.createElement('div');
+                circle.classList.add('floating-circle', 'bubbles');
+                const size = 15 + Math.random() * 25;
+                circle.style.width = circle.style.height = size + 'px';
+                circle.style.left = Math.random() * window.innerWidth + 'px';
+                circle.style.animationDuration = (4 + Math.random() * 6) + 's';
+                document.body.appendChild(circle);
+
+                circle.addEventListener('animationend', () => {
+                    circle.remove();
+                });
+            }
+            
+            function createHeart() {
+                const circle = document.createElement('div');
+                circle.classList.add('floating-circle', 'hearts');
+                const size = 20 + Math.random() * 20;
+                circle.style.width = circle.style.height = size + 'px';
+                circle.style.left = Math.random() * window.innerWidth + 'px';
+                circle.style.animationDuration = (5 + Math.random() * 5) + 's';
+                circle.innerHTML = '❤️';
+                document.body.appendChild(circle);
+
+                circle.addEventListener('animationend', () => {
+                    circle.remove();
+                });
+            }
+            
+            function createSnow() {
+                const circle = document.createElement('div');
+                circle.classList.add('floating-circle', 'snow');
+                const size = 8 + Math.random() * 12;
+                circle.style.width = circle.style.height = size + 'px';
+                circle.style.left = Math.random() * window.innerWidth + 'px';
+                circle.style.animationDuration = (6 + Math.random() * 4) + 's';
+                document.body.appendChild(circle);
+
+                circle.addEventListener('animationend', () => {
+                    circle.remove();
+                });
+            }
+            
+            function createStar() {
+                const circle = document.createElement('div');
+                circle.classList.add('floating-circle', 'stars');
+                const size = 10 + Math.random() * 15;
+                circle.style.width = circle.style.height = size + 'px';
+                circle.style.left = Math.random() * window.innerWidth + 'px';
+                circle.style.animationDuration = (4 + Math.random() * 4) + 's';
+                document.body.appendChild(circle);
+
+                circle.addEventListener('animationend', () => {
+                    circle.remove();
+                });
+            }
+            
+            function resetSettings() {
+                textSize = 1;
+                buttonScale = 1;
+                isColorblindMode = false;
+                isDarkTheme = false;
+                currentBackground = 'default';
+                currentEffect = 'none';
+                
+                colorblindToggle.checked = false;
+                themeToggle.checked = false;
+                
+                document.body.classList.remove('colorblind-theme', 'dark-theme');
+                applyBackground('default');
+                selectBackgroundOption('default');
+                applyEffect('none');
+                selectEffectOption('none');
+                
+                updateTextSize();
+                updateTextSizeIndicator();
+                updateButtonSize();
+                updateButtonSizeIndicator();
+                updatePatternPreviews();
+                
+                localStorage.removeItem('textSize');
+                localStorage.removeItem('buttonScale');
+                localStorage.removeItem('colorblindMode');
+                localStorage.removeItem('darkTheme');
+                localStorage.removeItem('background');
+                localStorage.removeItem('effect');
+            }
+            
+            function downloadImage() {
+                if (!currentImageUrl) return;
+                
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = 'remake-ai-image.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            cellHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const cellId = this.getAttribute('data-cell');
+                    const content = document.getElementById(`${cellId}-cell`);
+                    const arrow = this.querySelector('.cell-arrow');
+                    
+                    cellHeaders.forEach(h => {
+                        if (h !== this) {
+                            const otherCellId = h.getAttribute('data-cell');
+                            const otherContent = document.getElementById(`${otherCellId}-cell`);
+                            const otherArrow = h.querySelector('.cell-arrow');
+                            
+                            otherContent.classList.remove('active');
+                            otherArrow.classList.remove('rotated');
+                        }
+                    });
+                    
+                    content.classList.toggle('active');
+                    arrow.classList.toggle('rotated');
+                });
+            });
+            
+            settingsBtn.addEventListener('click', function() {
+                settingsPanel.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', function(event) {
+                if (!settingsPanel.contains(event.target) && !settingsBtn.contains(event.target)) {
+                    settingsPanel.classList.remove('active');
+                }
+                if (!languageDropdown.contains(event.target) && !languageBtn.contains(event.target)) {
+                    languageDropdown.classList.remove('active');
+                }
+            });
+            
+            languageBtn.addEventListener('click', function() {
+                languageDropdown.classList.toggle('active');
+            });
+            
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const lang = this.getAttribute('data-lang');
+                    setLanguage(lang);
+                    languageDropdown.classList.remove('active');
+                });
+            });
+            
+            decreaseTextBtn.addEventListener('click', function() {
+                if (textSize > 0.8) {
+                    textSize -= 0.1;
+                    updateTextSize();
+                    updateTextSizeIndicator();
+                }
+            });
+            
+            increaseTextBtn.addEventListener('click', function() {
+                if (textSize < 1.5) {
+                    textSize += 0.1;
+                    updateTextSize();
+                    updateTextSizeIndicator();
+                }
+            });
+            
+            decreaseButtonsBtn.addEventListener('click', function() {
+                if (buttonScale > 0.8) {
+                    buttonScale -= 0.1;
+                    updateButtonSize();
+                    updateButtonSizeIndicator();
+                }
+            });
+            
+            increaseButtonsBtn.addEventListener('click', function() {
+                if (buttonScale < 1.5) {
+                    buttonScale += 0.1;
+                    updateButtonSize();
+                    updateButtonSizeIndicator();
+                }
+            });
+            
+            colorblindToggle.addEventListener('change', function() {
+                isColorblindMode = this.checked;
+                if (isColorblindMode) {
+                    document.body.classList.add('colorblind-theme');
+                } else {
+                    document.body.classList.remove('colorblind-theme');
+                }
+                localStorage.setItem('colorblindMode', isColorblindMode);
+            });
+            
+            themeToggle.addEventListener('change', function() {
+                isDarkTheme = this.checked;
+                if (isDarkTheme) {
+                    document.body.classList.add('dark-theme');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                }
+                
+                if (currentBackground.startsWith('pattern')) {
+                    applyBackground(currentBackground);
+                }
+                updatePatternPreviews();
+                
+                localStorage.setItem('darkTheme', isDarkTheme);
+            });
+            
+            backgroundOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const bgType = this.getAttribute('data-bg');
+                    currentBackground = bgType;
+                    applyBackground(bgType);
+                    selectBackgroundOption(bgType);
+                });
+            });
+            
+            effectOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const effectType = this.getAttribute('data-effect');
+                    currentEffect = effectType;
+                    applyEffect(effectType);
+                    selectEffectOption(effectType);
+                });
+            });
+            
+            resetSettingsBtn.addEventListener('click', resetSettings);
+            
+            downloadBtn.addEventListener('click', downloadImage);
+            
+            styleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    styleOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedStyle = this.getAttribute('data-style');
+                });
+            });
+            
+            generateBtn.addEventListener('click', function() {
+                const prompt = document.getElementById('prompt').value.trim();
+                
+                if (!prompt) {
+                    alert(currentLanguage === 'ru' ? 'Пожалуйста, опишите ваше изображение' : 
+                         currentLanguage === 'en' ? 'Please describe your image' :
+                         currentLanguage === 'zh' ? '请描述您的图像' :
+                         currentLanguage === 'ko' ? '이미지를 설명해주세요' :
+                         currentLanguage === 'ja' ? '画像を説明してください' :
+                         currentLanguage === 'ar' ? 'يرجى وصف صورتك' :
+                         currentLanguage === 'es' ? 'Por favor describe tu imagen' :
+                         currentLanguage === 'fr' ? 'Veuillez décrire votre image' :
+                         currentLanguage === 'de' ? 'Bitte beschreiben Sie Ihr Bild' :
+                         currentLanguage === 'pt' ? 'Por favor descreva sua imagem' :
+                         'कृपया अपनी छवि का वर्णन करें');
+                    return;
+                }
+                
+                if (!selectedStyle) {
+                    alert(currentLanguage === 'ru' ? 'Пожалуйста, выберите стиль' : 
+                         currentLanguage === 'en' ? 'Please select a style' :
+                         currentLanguage === 'zh' ? '请选择样式' :
+                         currentLanguage === 'ko' ? '스타일을 선택해주세요' :
+                         currentLanguage === 'ja' ? 'スタイルを選択してください' :
+                         currentLanguage === 'ar' ? 'يرجى اختيار النمط' :
+                         currentLanguage === 'es' ? 'Por favor selecciona un estilo' :
+                         currentLanguage === 'fr' ? 'Veuillez sélectionner un style' :
+                         currentLanguage === 'de' ? 'Bitte wählen Sie einen Stil' :
+                         currentLanguage === 'pt' ? 'Por favor selecione um estilo' :
+                         'कृपया एक शैली चुनें');
+                    return;
+                }
+                
+                loadingIndicator.style.display = 'block';
+                previewPlaceholder.style.display = 'none';
+                previewImage.style.display = 'none';
+                downloadBtn.disabled = true;
+                
+                setTimeout(function() {
+                    loadingIndicator.style.display = 'none';
+                    previewImage.style.display = 'block';
+                    currentImageUrl = "https://via.placeholder.com/500x300/0072B2/ffffff?text=" + 
+                        (currentLanguage === 'ru' ? 'Изображение+в+стиле+' :
+                         currentLanguage === 'en' ? 'Image+in+' :
+                         currentLanguage === 'zh' ? '风格图像+' :
+                         currentLanguage === 'ko' ? '스타일+이미지+' :
+                         currentLanguage === 'ja' ? 'スタイルの画像+' :
+                         currentLanguage === 'ar' ? 'صورة+بأسلوب+' :
+                         currentLanguage === 'es' ? 'Imagen+en+estilo+' :
+                         currentLanguage === 'fr' ? 'Image+dans+le+style+' :
+                         currentLanguage === 'de' ? 'Bild+im+Stil+' :
+                         currentLanguage === 'pt' ? 'Imagem+no+estilo+' :
+                         'शैली+में+छवि+') + selectedStyle;
+                    previewImage.src = currentImageUrl;
+                    previewImage.alt = (currentLanguage === 'ru' ? 'Сгенерированное изображение: ' :
+                                      currentLanguage === 'en' ? 'Generated image: ' :
+                                      currentLanguage === 'zh' ? '生成的图像：' :
+                                      currentLanguage === 'ko' ? '생성된 이미지: ' :
+                                      currentLanguage === 'ja' ? '生成された画像：' :
+                                      currentLanguage === 'ar' ? 'الصورة المُنشأة: ' :
+                                      currentLanguage === 'es' ? 'Imagen generada: ' :
+                                      currentLanguage === 'fr' ? 'Image générée: ' :
+                                      currentLanguage === 'de' ? 'Generiertes Bild: ' :
+                                      currentLanguage === 'pt' ? 'Imagem gerada: ' :
+                                      'जनरेट की गई छवि: ') + prompt;
+                    
+                    downloadBtn.disabled = false;
+                    
+                    const generationHistory = JSON.parse(localStorage.getItem('generationHistory') || '[]');
+                    generationHistory.push({
+                        prompt: prompt,
+                        style: selectedStyle,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('generationHistory', JSON.stringify(generationHistory));
+                }, 2000);
+            });
+            
+            initializeSettings();
+        });
+    </script>
+</body>
+</html>
